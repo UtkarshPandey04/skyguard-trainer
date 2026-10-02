@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #070b12;
+  color: #c5d8ea;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Tactical military grid background */
+.tactical-grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(31, 51, 77, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(31, 51, 77, 0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.tactical-dots-bg {
+  background-image: radial-gradient(rgba(0, 229, 163, 0.15) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Subtle CRT scanline effect for military monitor feel */
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+/* Tactical HUD corner borders */
+.hud-corner {
+  position: relative;
+}
+.hud-corner::before,
+.hud-corner::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: #00e5a3;
+  pointer-events: none;
+}
+.hud-corner::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid #00e5a3;
+  border-left: 2px solid #00e5a3;
+}
+.hud-corner::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid #00e5a3;
+  border-right: 2px solid #00e5a3;
+}
+
+/* Custom scrollbar for tactical UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090e17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f334d;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00e5a3;
+}
+
+/* Tactical glow classes */
+.glow-primary {
+  text-shadow: 0 0 8px rgba(0, 229, 163, 0.6);
+}
+.glow-critical {
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+.glow-amber {
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+.glow-accent {
+  text-shadow: 0 0 8px rgba(0, 195, 255, 0.6);
+}
