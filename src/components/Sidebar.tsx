@@ -25,7 +25,7 @@ interface NavItem {
   badgeColor?: string;
 }
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<{ onOpenSafetyModal?: () => void }> = ({ onOpenSafetyModal }) => {
   const { activeModule, setActiveModule, tracks, scenario } = useSimulation();
 
   const navItems: NavItem[] = [
@@ -81,11 +81,18 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Safety & Defensive Boundary Notice */}
-      <div className="p-3 border-t border-tactical-border bg-[#070b12]/80 font-mono text-[10px]">
-        <div className="flex items-center gap-1.5 text-tactical-amber mb-1 font-semibold">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>SAFETY BOUNDARY</span>
+      {/* Safety & Defensive Boundary Notice - Clickable for Audit Modal */}
+      <div 
+        onClick={onOpenSafetyModal}
+        className="p-3 border-t border-tactical-border bg-[#070b12]/80 font-mono text-[10px] cursor-pointer hover:bg-tactical-card/60 transition-all group"
+        title="Click to view Cryptographic Security & Safety Interlocks"
+      >
+        <div className="flex items-center justify-between text-tactical-amber mb-1 font-semibold">
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>SAFETY BOUNDARY</span>
+          </div>
+          <span className="text-[9px] text-tactical-primary group-hover:underline">AUDIT &gt;</span>
         </div>
         <p className="text-tactical-textMuted leading-tight text-[9px]">
           Software simulation training platform only. Synthetic telemetry; zero live-weapon or kinetic engagement controls.
@@ -95,7 +102,7 @@ export const Sidebar: React.FC = () => {
           <span className="flex items-center gap-1 text-tactical-primary">
             <ShieldCheck className="w-3 h-3" /> SECURE DSSC SIM
           </span>
-          <span>AIRSPACE-SIM 26247</span>
+          <span className="font-bold text-white">AIRSPACE-SIM 26247</span>
         </div>
       </div>
     </aside>

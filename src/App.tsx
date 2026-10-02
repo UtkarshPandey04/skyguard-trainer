@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { DemoBanner } from './components/DemoBanner';
 import { LandingModal } from './components/LandingModal';
+import { SafetyBoundaryModal } from './components/SafetyBoundaryModal';
 
 // Views
 import { CommandCenterView } from './components/views/CommandCenterView';
@@ -55,6 +56,7 @@ const MainContent: React.FC = () => {
 const AppInner: React.FC = () => {
   // Show landing modal on first load so judges see the official mission briefing
   const [showLanding, setShowLanding] = useState<boolean>(true);
+  const [showSafetyModal, setShowSafetyModal] = useState<boolean>(false);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-tactical-bg text-tactical-textNormal font-sans tactical-grid-bg">
@@ -62,13 +64,14 @@ const AppInner: React.FC = () => {
       <DemoBanner />
 
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
+        <Sidebar onOpenSafetyModal={() => setShowSafetyModal(true)} />
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <MainContent />
         </main>
       </div>
 
       <LandingModal isOpen={showLanding} onClose={() => setShowLanding(false)} />
+      <SafetyBoundaryModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} />
     </div>
   );
 };
