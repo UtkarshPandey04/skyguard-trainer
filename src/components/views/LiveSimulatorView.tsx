@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSimulation } from '../../context/SimulationContext';
 import { TacticalRadarCanvas } from '../TacticalRadarCanvas';
+import { Tactical3DAndVRViewport } from '../Tactical3DAndVRViewport';
+import { FLIRThermalCamera } from '../FLIRThermalCamera';
+import { RFSpectrumAnalyzer } from '../RFSpectrumAnalyzer';
+import { AcousticSpectrogram } from '../AcousticSpectrogram';
 import { 
   Eye, 
   Flame, 
@@ -14,7 +18,10 @@ import {
   AlertCircle,
   HelpCircle,
   Zap,
-  ChevronRight
+  ChevronRight,
+  Glasses,
+  Compass,
+  Layers
 } from 'lucide-react';
 import { SensorType, SensorStatus } from '../../types/simulation';
 
@@ -30,6 +37,9 @@ export const LiveSimulatorView: React.FC = () => {
     scores,
     selectedTrack
   } = useSimulation();
+
+  // Active Center Viewport Mode: 2D Radar | 3D/VR Airspace | Multi-Spectral Optics
+  const [viewportMode, setViewportMode] = useState<'2D_RADAR' | '3D_VR' | 'MULTI_SPECTRAL'>('3D_VR');
 
   const timelineSteps = [
     { label: 'DETECT', status: 'COMPLETED', desc: 'Target acquired by Radar/EO' },
@@ -49,27 +59,55 @@ export const LiveSimulatorView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-tactical-bg p-3 gap-3 font-mono">
-      {/* Top Quick Status Strip */}
-      <div className="flex items-center justify-between bg-tactical-surface border border-tactical-border px-3 py-1.5 rounded-lg text-xs">
+      {/* Top Quick Status Strip & Viewport Switcher */}
+      <div className="flex flex-wrap items-center justify-between bg-tactical-surface border border-tactical-border px-3 py-1.5 rounded-lg text-xs gap-2">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5 text-tactical-primary font-bold">
             <span className="w-2 h-2 rounded-full bg-tactical-primary animate-ping-slow" />
             LIVE SIMULATOR ACTIVE
           </span>
-          <span className="text-tactical-border">|</span>
-          <span className="text-tactical-textNormal">ENVIRONMENT: {scenario.environment} ({scenario.weather})</span>
-          <span className="text-tactical-border">|</span>
-          <span className="text-tactical-amber font-bold">ACTIVE THREATS: {tracks.length}</span>
+          <span className="text-tactical-border hidden md:inline">|</span>
+          <span className="text-tactical-textNormal hidden md:inline">{scenario.environment} ({scenario.weather})</span>
+          <span className="text-tactical-border hidden md:inline">|</span>
+          <span className="text-tactical-amber font-bold">{tracks.length} TARGETS</span>
+        </div>
+
+        {/* Viewport Mode Switcher (2D / 3D-VR / Multi-Spectral) */}
+        <div className="flex items-center gap-1 bg-[#090e17] p-1 rounded-lg border border-tactical-border">
+          <button
+            onClick={() => setViewportMode('2D_RADAR')}
+            className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all ${
+              viewportMode === '2D_RADAR'
+                ? 'bg-tactical-primary text-black shadow-glow-green'
+                : 'text-tactical-textMuted hover:text-white'
+            }`}
+          >
+            2D RADAR
+          </button>
+          <button
+            onClick={() => setViewportMode('3D_VR')}
+            className={`px-3 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+              viewportMode === '3D_VR'
+                ? 'bg-tactical-primary text-black shadow-glow-green'
+                : 'text-tactical-primary hover:text-white'
+            }`}
+          >
+            <Glasses className="w-3.5 h-3.5" />
+            <span>3D / VR AIRSPACE</span>
+          </button>
+          <button
+            onClick={() => setViewportMode('MULTI_SPECTRAL')}
+            className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all ${
+              viewportMode === 'MULTI_SPECTRAL'
+                ? 'bg-tactical-accent text-black shadow-glow-teal'
+                : 'text-tactical-textMuted hover:text-white'
+            }`}
+          >
+            FLIR & EW SPECTRA
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setActiveModule('THREAT ANALYSIS')}
-            className="px-2.5 py-1 rounded bg-[#1f334d] hover:bg-[#2c486d] text-white text-[11px] font-bold flex items-center gap-1 transition-all"
-          >
-            <span>INSPECT AI SIGNATURES</span>
-            <ChevronRight className="w-3 h-3 text-tactical-accent" />
-          </button>
           <button
             onClick={() => setActiveModule('DECISION ENGINE')}
             className="px-2.5 py-1 rounded bg-tactical-primary/20 hover:bg-tactical-primary/30 text-tactical-primary border border-tactical-primary/40 text-[11px] font-bold flex items-center gap-1 transition-all"
@@ -80,7 +118,7 @@ export const LiveSimulatorView: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Simulation Viewport (Left Sensors, Center Radar, Right Threat Queue) */}
+      {/* Main Simulation Viewport (Left Sensors, Center Radar/3D/VR, Right Threat Queue) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0">
         {/* LEFT: Sensor Panels (2.5 cols) */}
         <div className="lg:col-span-3 flex flex-col bg-tactical-surface border border-tactical-border rounded-lg overflow-hidden">
@@ -91,7 +129,7 @@ export const LiveSimulatorView: React.FC = () => {
             <span className="text-[10px] text-tactical-textMuted">4 CHANNELS</span>
           </div>
 
-          <div className="flex-1 p-2 space-y-2.5 overflow-y-auto text-xs">
+          <div className="flex-1 p-2 space-y-2 overflow-y-auto text-xs">
             {sensorList.map(({ key, label, icon: Icon }) => {
               const sensorData = sensors[key];
               const isDegraded = sensorData.status === 'DEGRADED';
@@ -100,7 +138,7 @@ export const LiveSimulatorView: React.FC = () => {
               return (
                 <div
                   key={key}
-                  className={`p-2.5 rounded-lg border transition-all ${
+                  className={`p-2 rounded-lg border transition-all ${
                     isOffline 
                       ? 'border-red-500/40 bg-red-950/15' 
                       : isDegraded 
@@ -108,19 +146,19 @@ export const LiveSimulatorView: React.FC = () => {
                         : 'border-tactical-border bg-tactical-card'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5 text-white font-bold text-[11px]">
                       <Icon className={`w-3.5 h-3.5 ${isOffline ? 'text-red-400' : isDegraded ? 'text-tactical-amber' : 'text-tactical-primary'}`} />
                       <span>{label}</span>
                     </div>
-                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
                       isOffline ? 'bg-red-500/20 text-red-400' : isDegraded ? 'bg-amber-500/20 text-tactical-amber' : 'bg-emerald-500/20 text-tactical-primary'
                     }`}>
                       {sensorData.status}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[10px] text-tactical-textMuted mb-2">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-tactical-textMuted mb-1.5">
                     <div>
                       <span>Integrity: </span>
                       <span className="text-white font-semibold">{sensorData.healthPercent}%</span>
@@ -132,12 +170,12 @@ export const LiveSimulatorView: React.FC = () => {
                   </div>
 
                   {/* Manual fault injection buttons for instructors / testing */}
-                  <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-tactical-border/60">
+                  <div className="grid grid-cols-3 gap-1 pt-1 border-t border-tactical-border/60">
                     {(['ACTIVE', 'DEGRADED', 'OFFLINE'] as SensorStatus[]).map((st) => (
                       <button
                         key={st}
                         onClick={() => setSensorStatus(key, st)}
-                        className={`py-1 rounded text-[9px] font-bold transition-all ${
+                        className={`py-0.5 rounded text-[9px] font-bold transition-all ${
                           sensorData.status === st
                             ? st === 'ACTIVE' ? 'bg-emerald-500/30 text-tactical-primary border border-emerald-500'
                               : st === 'DEGRADED' ? 'bg-amber-500/30 text-tactical-amber border border-amber-500'
@@ -153,17 +191,25 @@ export const LiveSimulatorView: React.FC = () => {
               );
             })}
 
-            {/* Sensor Note */}
+            {/* Quick Multi-Spectral Preview shortcut */}
             <div className="p-2 rounded bg-[#090e17] border border-tactical-border text-[10px] text-tactical-textMuted leading-relaxed">
-              <span className="text-tactical-accent font-bold">Sensor Fusion Notice:</span>{' '}
-              Toggle sensor degradation states above to observe multi-spectral fusion confidence recalibration.
+              <span className="text-tactical-accent font-bold">Multi-Spectral Intel:</span>{' '}
+              Toggle between 2D Top-Down, 3D Orbit/VR Dual-Eye, or FLIR/EW Spectrum views above.
             </div>
           </div>
         </div>
 
-        {/* CENTER: Radar / Tactical Map (6.5 cols) */}
+        {/* CENTER: Radar or 3D / VR Viewport (6.5 cols) */}
         <div className="lg:col-span-6 flex flex-col h-full min-h-[360px] bg-tactical-surface border border-tactical-border rounded-lg overflow-hidden">
-          <TacticalRadarCanvas interactive={true} />
+          {viewportMode === '2D_RADAR' && <TacticalRadarCanvas interactive={true} />}
+          {viewportMode === '3D_VR' && <Tactical3DAndVRViewport />}
+          {viewportMode === 'MULTI_SPECTRAL' && (
+            <div className="flex-1 p-2 overflow-y-auto space-y-2">
+              <FLIRThermalCamera />
+              <RFSpectrumAnalyzer />
+              <AcousticSpectrogram />
+            </div>
+          )}
         </div>
 
         {/* RIGHT: Threat Queue (3 cols) */}
@@ -256,7 +302,7 @@ export const LiveSimulatorView: React.FC = () => {
         </div>
       </div>
 
-      {/* BOTTOM: Training Timeline (DETECT -> CLASSIFY -> ASSESS -> DECIDE -> RESPOND -> REVIEW) */}
+      {/* BOTTOM: Training Timeline */}
       <div className="bg-tactical-surface border border-tactical-border rounded-lg p-2.5">
         <div className="text-[10px] text-tactical-textMuted uppercase font-bold mb-2 flex items-center justify-between">
           <span>TRAINING PIPELINE SEQUENCE</span>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSimulation } from '../../context/SimulationContext';
 import { TraineeDecisionChoice } from '../../types/simulation';
+import { DecisionTreeGraph } from '../DecisionTreeGraph';
 import { 
   GitFork, 
   ShieldAlert, 
@@ -224,6 +225,9 @@ export const DecisionEngineView: React.FC = () => {
               })}
             </div>
           </div>
+
+          {/* Decision-Tree Doctrinal Branching Graph */}
+          <DecisionTreeGraph />
 
           {/* Transparent Scoring Log (Novel Feature #7) */}
           <div className="bg-tactical-surface border border-tactical-border rounded-lg p-4 space-y-3">
