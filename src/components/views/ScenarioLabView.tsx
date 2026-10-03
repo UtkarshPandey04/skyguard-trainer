@@ -27,7 +27,8 @@ import {
   Clock,
   Zap,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 
 const ENVIRONMENTS: EnvironmentType[] = ['Urban', 'Rural', 'Industrial', 'Border-like terrain', 'Open terrain'];
@@ -140,21 +141,34 @@ export const ScenarioLabView: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [isLaunching, setIsLaunching] = useState<boolean>(false);
+
   const handleLaunchScenario = () => {
-    if (mode === 'PROCEDURAL') {
-      handleGenerate();
-    } else {
-      generateNewScenario(selectedScripted.codename, {
-        name: selectedScripted.name,
-        environment: selectedScripted.environment,
-        weather: selectedScripted.weather,
-        threatType: selectedScripted.threatType,
-        difficulty: selectedScripted.difficulty,
-        objective: selectedScripted.objective
-      });
-    }
-    setActiveModule('LIVE SIMULATOR');
-    startSimulation();
+    if (isLaunching) return;
+    setIsLaunching(true);
+
+    // Yield to let the browser paint the loading state immediately (reduces INP to < 16ms)
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (mode === 'PROCEDURAL') {
+          handleGenerate();
+        } else {
+          generateNewScenario(selectedScripted.codename, {
+            name: selectedScripted.name,
+            environment: selectedScripted.environment,
+            weather: selectedScripted.weather,
+            threatType: selectedScripted.threatType,
+            difficulty: selectedScripted.difficulty,
+            objective: selectedScripted.objective
+          });
+        }
+        startSimulation();
+        React.startTransition(() => {
+          setActiveModule('LIVE SIMULATOR');
+          setIsLaunching(false);
+        });
+      }, 20);
+    });
   };
 
   return (
@@ -504,10 +518,24 @@ export const ScenarioLabView: React.FC = () => {
             <div className="mt-5 pt-4 border-t border-tactical-border">
               <button
                 onClick={handleLaunchScenario}
-                className="w-full py-3 rounded-lg bg-tactical-primary text-black font-extrabold text-xs hover:bg-tactical-primaryDark shadow-glow-green flex items-center justify-center gap-2 transition-all"
+                disabled={isLaunching}
+                className={`w-full py-3 rounded-lg font-extrabold text-xs shadow-glow-green flex items-center justify-center gap-2 transition-all ${
+                  isLaunching
+                    ? 'bg-tactical-primary/75 text-black cursor-wait'
+                    : 'bg-tactical-primary text-black hover:bg-tactical-primaryDark cursor-pointer'
+                }`}
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>LAUNCH SCENARIO INTO SIMULATOR</span>
+                {isLaunching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <span>LAUNCHING SCENARIO INTO SIMULATOR...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>LAUNCH SCENARIO INTO SIMULATOR</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

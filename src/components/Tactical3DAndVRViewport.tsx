@@ -251,6 +251,9 @@ export const Tactical3DAndVRViewport: React.FC<Tactical3DAndVRViewportProps> = (
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
+      droneMeshesRef.current.clear();
+      sceneRef.current = null;
+      rendererRef.current = null;
     };
   }, []);
 
@@ -261,6 +264,25 @@ export const Tactical3DAndVRViewport: React.FC<Tactical3DAndVRViewportProps> = (
 
     // Helper to map 0-1000 simulation space to 3D world space (-350 to +350)
     const mapTo3D = (v: number) => ((v - 500) / 500) * 350;
+
+    // Remove stale drone meshes from previous scenarios or tracks
+    const currentTrackIds = new Set(tracks.map(t => t.id));
+    droneMeshesRef.current.forEach((mesh, id) => {
+      if (!currentTrackIds.has(id)) {
+        scene.remove(mesh);
+        mesh.traverse(child => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => m.dispose());
+            } else {
+              child.material?.dispose();
+            }
+          }
+        });
+        droneMeshesRef.current.delete(id);
+      }
+    });
 
     tracks.forEach(trk => {
       let droneGroup = droneMeshesRef.current.get(trk.id);

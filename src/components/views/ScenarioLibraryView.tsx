@@ -14,7 +14,8 @@ import {
   Radio, 
   ShieldAlert,
   CheckCircle2,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 
 export const ScenarioLibraryView: React.FC = () => {
@@ -23,6 +24,8 @@ export const ScenarioLibraryView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('ALL');
   const [selectedInspectScenario, setSelectedInspectScenario] = useState<ScenarioDefinition | null>(null);
+
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // Filter presets
   const filteredPresets = PRESET_SCENARIOS.filter((sc) => {
@@ -37,9 +40,20 @@ export const ScenarioLibraryView: React.FC = () => {
   });
 
   const handleLoadAndLaunch = (scId: string) => {
-    loadPresetScenario(scId);
-    setActiveModule('LIVE SIMULATOR');
-    startSimulation();
+    if (loadingId) return;
+    setLoadingId(scId);
+
+    // Yield to let the browser paint the loading state immediately (reduces INP to < 16ms)
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        loadPresetScenario(scId);
+        startSimulation();
+        React.startTransition(() => {
+          setActiveModule('LIVE SIMULATOR');
+          setLoadingId(null);
+        });
+      }, 20);
+    });
   };
 
   const handleDuplicate = (sc: ScenarioDefinition) => {
@@ -182,10 +196,25 @@ export const ScenarioLibraryView: React.FC = () => {
 
                 <button
                   onClick={() => handleLoadAndLaunch(sc.id)}
-                  className="px-3 py-1.5 rounded bg-tactical-primary text-black font-extrabold text-[11px] hover:bg-tactical-primaryDark shadow-glow-green flex items-center gap-1 transition-all"
+                  disabled={loadingId !== null}
+                  className={`px-3 py-1.5 rounded font-extrabold text-[11px] flex items-center gap-1.5 transition-all ${
+                    loadingId === sc.id
+                      ? 'bg-tactical-primary/75 text-black shadow-glow-green cursor-wait'
+                      : 'bg-tactical-primary text-black hover:bg-tactical-primaryDark shadow-glow-green cursor-pointer'
+                  }`}
                   title="Load and Launch into Simulator"
                 >
-                  <Play className="w-3 h-3 fill-current" /> LOAD
+                  {loadingId === sc.id ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin text-black" />
+                      <span>LOADING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>LOAD</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -235,14 +264,22 @@ export const ScenarioLibraryView: React.FC = () => {
                 Close
               </button>
               <button
+                disabled={loadingId !== null}
                 onClick={() => {
                   const id = selectedInspectScenario.id;
                   setSelectedInspectScenario(null);
                   handleLoadAndLaunch(id);
                 }}
-                className="px-4 py-1.5 rounded bg-tactical-primary text-black font-extrabold text-xs shadow-glow-green"
+                className="px-4 py-1.5 rounded bg-tactical-primary text-black font-extrabold text-xs shadow-glow-green flex items-center gap-1.5 disabled:opacity-60"
               >
-                Launch Drill
+                {loadingId ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                    <span>Launching Drill...</span>
+                  </>
+                ) : (
+                  <span>Launch Drill</span>
+                )}
               </button>
             </div>
           </div>

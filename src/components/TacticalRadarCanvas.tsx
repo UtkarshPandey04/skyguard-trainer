@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useSimulation } from '../context/SimulationContext';
 import { DroneTrack } from '../types/simulation';
 
@@ -16,32 +16,31 @@ export const TacticalRadarCanvas: React.FC<TacticalRadarCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { tracks, selectedTrackId, setSelectedTrackId, scenario, sensors } = useSimulation();
 
-  const [sweepAngle, setSweepAngle] = useState<number>(0);
+  const sweepAngleRef = useRef<number>(0);
   const animFrameRef = useRef<number | null>(null);
 
-  // Animation sweep loop
+  // Keep latest state in ref to avoid re-binding requestAnimationFrame loop
+  const stateRef = useRef({ tracks, selectedTrackId, scenario, sensors, compact });
   useEffect(() => {
-    let lastTime = performance.now();
-    const animate = (time: number) => {
-      const dt = (time - lastTime) / 1000;
-      lastTime = time;
+    stateRef.current = { tracks, selectedTrackId, scenario, sensors, compact };
+  });
 
-      setSweepAngle(prev => (prev + dt * 1.2) % (Math.PI * 2));
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-    animFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, []);
-
-  // Main canvas render
+  // High-performance canvas animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    let lastTime = performance.now();
+
+    const animate = (time: number) => {
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+
+      sweepAngleRef.current = (sweepAngleRef.current + dt * 1.2) % (Math.PI * 2);
+      const sweepAngle = sweepAngleRef.current;
+      const { tracks, selectedTrackId, scenario, sensors, compact } = stateRef.current;
 
     // High-DPI support
     const dpr = window.devicePixelRatio || 1;
@@ -333,7 +332,15 @@ export const TacticalRadarCanvas: React.FC<TacticalRadarCanvasProps> = ({
     }
 
     ctx.restore();
-  }, [tracks, selectedTrackId, sweepAngle, scenario, sensors, compact]);
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
 
   // Click to select track
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
