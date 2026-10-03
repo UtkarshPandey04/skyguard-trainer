@@ -124,6 +124,10 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
   const [scenario, setScenario] = useState<ScenarioDefinition>(() => PRESET_SCENARIOS[0]);
   const [tracks, setTracks] = useState<DroneTrack[]>(() => generateTracksForScenario(PRESET_SCENARIOS[0]));
+  const tracksRef = useRef<DroneTrack[]>(tracks);
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(() => tracks[0]?.id || null);
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -284,7 +288,7 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Classify a track (Trainee classification action)
   const classifyTrack = (trackId: string, classification: DroneClassType) => {
-    const target = tracks.find(t => t.id === trackId);
+    const target = tracksRef.current.find(t => t.id === trackId) || tracks.find(t => t.id === trackId);
     if (!target) return;
 
     const isCorrect = target.groundTruth === classification;
@@ -332,7 +336,7 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Trainee Decision Action
   const makeDecision = (trackId: string, choice: TraineeDecisionChoice) => {
-    const target = tracks.find(t => t.id === trackId);
+    const target = tracksRef.current.find(t => t.id === trackId) || tracks.find(t => t.id === trackId);
     if (!target) return;
 
     // Evaluate decision quality
@@ -458,6 +462,7 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Complete scenario
   const completeScenario = () => {
     setIsRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
     tacticalAudio.playSuccess();
     addEvent({
       timestampSec: elapsedSec,

@@ -51,8 +51,8 @@ export const Tactical3DAndVRViewport: React.FC<Tactical3DAndVRViewportProps> = (
     const container = mountRef.current;
     if (!container) return;
 
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 500;
 
     // 1. Create Three.js Scene
     const scene = new THREE.Scene();
@@ -202,6 +202,15 @@ export const Tactical3DAndVRViewport: React.FC<Tactical3DAndVRViewportProps> = (
           // Standing atop command tower looking outward
           cam.position.set(0, 25, 0);
           cam.lookAt(200 * Math.sin(theta), 60, 200 * Math.cos(theta));
+        } else if (cameraMode === 'FOLLOW_TARGET') {
+          const selTrack = tracks.find(t => t.id === selectedTrackId) || tracks[0];
+          if (selTrack) {
+            const worldX = ((selTrack.x - 500) / 500) * 350;
+            const worldZ = ((selTrack.y - 500) / 500) * 350;
+            const worldY = Math.max(15, (selTrack.altitudeM / 400) * 160);
+            cam.position.set(worldX + 55 * Math.sin(theta), worldY + 30, worldZ + 55 * Math.cos(theta));
+            cam.lookAt(worldX, worldY, worldZ);
+          }
         }
 
         // Render
@@ -466,6 +475,14 @@ export const Tactical3DAndVRViewport: React.FC<Tactical3DAndVRViewportProps> = (
               }`}
             >
               DEFENSE TOWER
+            </button>
+            <button
+              onClick={() => setCameraMode('FOLLOW_TARGET')}
+              className={`px-2.5 py-1 rounded text-[10px] font-bold transition-all ${
+                cameraMode === 'FOLLOW_TARGET' ? 'bg-tactical-amber text-black' : 'text-tactical-textMuted hover:text-white'
+              }`}
+            >
+              FOLLOW TARGET
             </button>
           </div>
 
