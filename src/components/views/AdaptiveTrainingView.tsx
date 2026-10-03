@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSimulation } from '../../context/SimulationContext';
 import { 
   TrendingUp, 
@@ -11,7 +11,8 @@ import {
   Sliders, 
   BrainCircuit, 
   AlertCircle,
-  Play
+  Play,
+  Loader2
 } from 'lucide-react';
 
 export const AdaptiveTrainingView: React.FC = () => {
@@ -24,14 +25,26 @@ export const AdaptiveTrainingView: React.FC = () => {
     scores 
   } = useSimulation();
 
+  const [isLaunching, setIsLaunching] = useState<boolean>(false);
+
   const handleLaunchAdaptiveScenario = () => {
-    generateNewScenario(adaptiveRecommendation.nextScenarioSeed, {
-      difficulty: adaptiveRecommendation.targetLevel >= 4 ? 'Expert' : adaptiveRecommendation.targetLevel === 3 ? 'Advanced' : 'Intermediate',
-      sensorCondition: adaptiveRecommendation.targetLevel >= 4 ? 'Intermittent sensor' : 'Normal',
-      threatType: adaptiveRecommendation.targetLevel >= 4 ? 'Swarm' : 'Multiple drones',
+    if (isLaunching) return;
+    setIsLaunching(true);
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        generateNewScenario(adaptiveRecommendation.nextScenarioSeed, {
+          difficulty: adaptiveRecommendation.targetLevel >= 4 ? 'Expert' : adaptiveRecommendation.targetLevel === 3 ? 'Advanced' : 'Intermediate',
+          sensorCondition: adaptiveRecommendation.targetLevel >= 4 ? 'Intermittent sensor' : 'Normal',
+          threatType: adaptiveRecommendation.targetLevel >= 4 ? 'Swarm' : 'Multiple drones',
+        });
+        startSimulation();
+        React.startTransition(() => {
+          setActiveModule('LIVE SIMULATOR');
+          setIsLaunching(false);
+        });
+      }, 20);
     });
-    setActiveModule('LIVE SIMULATOR');
-    startSimulation();
   };
 
   return (
@@ -183,10 +196,24 @@ export const AdaptiveTrainingView: React.FC = () => {
           <div className="mt-5 pt-4 border-t border-tactical-border">
             <button
               onClick={handleLaunchAdaptiveScenario}
-              className="w-full py-3 rounded-lg bg-tactical-primary text-black font-extrabold text-xs hover:bg-tactical-primaryDark shadow-glow-green flex items-center justify-center gap-2 transition-all"
+              disabled={isLaunching}
+              className={`w-full py-3 rounded-lg font-extrabold text-xs shadow-glow-green flex items-center justify-center gap-2 transition-all ${
+                isLaunching
+                  ? 'bg-tactical-primary/75 text-black cursor-wait'
+                  : 'bg-tactical-primary text-black hover:bg-tactical-primaryDark cursor-pointer'
+              }`}
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>LAUNCH ADAPTED SCENARIO NOW</span>
+              {isLaunching ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-black" />
+                  <span>LAUNCHING ADAPTED SCENARIO NOW...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>LAUNCH ADAPTED SCENARIO NOW</span>
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -116,7 +116,12 @@ const INITIAL_HEATMAP: SkillHeatmapCell[] = [
 ];
 
 export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeModule, setActiveModule] = useState<string>('COMMAND CENTER');
+  const [activeModule, setActiveModuleState] = useState<string>('COMMAND CENTER');
+  const setActiveModule = (mod: string) => {
+    React.startTransition(() => {
+      setActiveModuleState(mod);
+    });
+  };
   const [scenario, setScenario] = useState<ScenarioDefinition>(() => PRESET_SCENARIOS[0]);
   const [tracks, setTracks] = useState<DroneTrack[]>(() => generateTracksForScenario(PRESET_SCENARIOS[0]));
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(() => tracks[0]?.id || null);

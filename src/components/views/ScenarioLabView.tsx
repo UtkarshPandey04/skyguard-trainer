@@ -294,10 +294,24 @@ export const ScenarioLabView: React.FC = () => {
             <div className="pt-4 border-t border-tactical-border">
               <button
                 onClick={handleLaunchScenario}
-                className="w-full py-3 rounded-lg bg-tactical-primary text-black font-extrabold text-xs hover:bg-tactical-primaryDark shadow-glow-green flex items-center justify-center gap-2"
+                disabled={isLaunching}
+                className={`w-full py-3 rounded-lg font-extrabold text-xs shadow-glow-green flex items-center justify-center gap-2 transition-all ${
+                  isLaunching
+                    ? 'bg-tactical-primary/75 text-black cursor-wait'
+                    : 'bg-tactical-primary text-black hover:bg-tactical-primaryDark cursor-pointer'
+                }`}
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>LAUNCH SCRIPTED MISSION WITH TIMED INJECTS</span>
+                {isLaunching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <span>LAUNCHING SCRIPTED MISSION WITH TIMED INJECTS...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>LAUNCH SCRIPTED MISSION WITH TIMED INJECTS</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
